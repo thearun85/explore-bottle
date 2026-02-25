@@ -2,13 +2,29 @@ from wsgiref.simple_server import make_server
 
 ROUTES_SIMPLE = {}
 
+class Request:
+    def bind(self, environ) -> None:
+        self._environ = environ
+        self.path = environ.get("PATH_INFO", "/")
+
+    @property
+    def method(self) -> str:
+        return self._environ.get("REQUEST_METHOD", "GET").upper()
+
+    @property
+    def query_string(self) -> str:
+        return self._environ.get("QUERY_STRING", "")
+
 def route(url):
     def wrapper(handler):
         ROUTES_SIMPLE[url] = handler
         return handler
     return wrapper
 
+request = Request()
+
 def WSGIHandler(environ, start_response):
+    request.bind(environ)
     path = environ.get("PATH_INFO", "/")
     handler = ROUTES_SIMPLE.get(path)
     if handler:
@@ -21,7 +37,7 @@ def WSGIHandler(environ, start_response):
 
 @route("/index")
 def hello():
-    return "Hello World!"
+    return f"'Method': {request.method}, 'Path': {request.path}, 'Query String': {request.query_string}"
 
 @route("/about")
 def about():
