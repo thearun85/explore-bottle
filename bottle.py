@@ -1,8 +1,9 @@
 from wsgiref.simple_server import make_server
+import threading
 
 ROUTES_SIMPLE = {}
 
-class Request:
+class Request(threading.local):
     def bind(self, environ) -> None:
         self._environ = environ
         self.path = environ.get("PATH_INFO", "/")
