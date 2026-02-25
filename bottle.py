@@ -23,9 +23,9 @@ class Response(threading.local):
         self.content_type = 'text/html'
         self.header = {}
 
-def route(url):
+def route(url, method='GET'):
     def wrapper(handler):
-        ROUTES_SIMPLE[url] = handler
+        ROUTES_SIMPLE.setdefault(method, {})[url] = handler
         return handler
     return wrapper
 
@@ -36,7 +36,7 @@ def WSGIHandler(environ, start_response):
     request.bind(environ)
     response.bind()
     path = environ.get("PATH_INFO", "/")
-    handler = ROUTES_SIMPLE.get(path)
+    handler = ROUTES_SIMPLE.get(request.method, {}).get(path)
     if handler:
         output = handler()
     else:
@@ -46,15 +46,15 @@ def WSGIHandler(environ, start_response):
     start_response(status, [('Content-Type', response.content_type)])
     return [output.encode()]
     
-@route("/index")
+@route("/index", method='GET')
 def hello():
     return f"'Method': {request.method}, 'Path': {request.path}, 'Query String': {request.query_string}"
 
-@route("/about")
+@route("/about", method='GET')
 def about():
     return "This is a clone of Bottle framework"
 
-@route("/json")
+@route("/json", method='POST')
 def json_test():
     response.content_type = "application/json"
     return '{"name": "bottle"}'
